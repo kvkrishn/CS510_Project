@@ -1,0 +1,92 @@
+---
+title: "Prediction of Aromatic Rings in SRC Kinase Inhibitors"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+# install package to read excel file data
+install.packages("readxl")
+```
+
+```{r}
+library("readxl")
+# read in src kinase inhibitor data. The data contains smile strings of the molecules as well as ~20 aggregate chemical features used for prediction. 
+
+src_kinase_dataframe = read_excel("src_kinase_inhibitor_data.xlsx")
+```
+```{r}
+# check names of dataset and what columns are within the dataset. 
+names(src_kinase_dataframe)
+# delete first column of dataset as the indexing is not needed
+src_kinase_dataframe <- src_kinase_dataframe[-1]
+#check to see if column was deleted
+names(src_kinase_dataframe)
+```
+```{r}
+# also get rid of smile strings. This is necessary as we cannot represent smile strings as either a categorical or numerical variable and they also do not contribute much to the prediction unless they are encoded in another space. 
+src_kin_2 = subset(src_kinase_dataframe, select = -smiles)
+
+# get the names of the columns now present and look at summary statistics of the data to see how data is framed.
+names(src_kin_2)
+summary(src_kin_2)
+```
+```{r}
+# this block of code divides the dataset into training, validation, and testing. This was coded with help from stack overflow for debugging questions, but the main base of it is that we split up the training as 60% of the data, the validation as 20% of the data and the testing as 20% of the data. Training, validation and testing help in making sure the model can predict accurately for the predictor variable given the dataset features. We first start off by defining variables that contain the percentages of our training, validation and testing data. We then define the indices while also randomizing our sample set for each divide. Lastly using the indices calculated, we create a training dataframe, validation dataframe, and testing dataframe. 
+
+df <- src_kin_2
+trperc=0.6
+valperc=0.2
+testperc=0.2
+
+percTraining <- trperc
+percValidation <- valperc
+percTesting <- testperc
+  
+samplesizeTraining <- floor(percTraining * nrow(df))
+samplesizeValidation <- floor(percValidation * nrow(df))
+samplesizeTesting <- floor(percTesting * nrow(df))
+  
+trainingind <- sort(sample(seq_len(nrow(df)), size = samplesizeTraining))
+nottrainingind <- setdiff(seq_len(nrow(df)), trainingind)
+validationind <- sort(sample(nottrainingind, size=samplesizeValidation))
+testingind <- setdiff(nottrainingind, validationind)
+  
+training_df <- df[trainingind, ]
+val_df <- df[validationind, ]
+testing_df <- df[testingind, ]
+```
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
+# we install the random forest package
+install.packages("randomForest")
+```
+```{r}
+# load the random forest library
+library(randomForest)
+# create training df that contains features and a predictor list that contains the prediction variable which in this case is rings
+training_df_x <- subset(training_df,select=-rings)
+training_y <- training_df$rings
+
+# do the same as above but for testing
+testing_df_x <- subset(testing_df,select=-rings)
+testing_y <- testing_df$rings
+
+# build the random forest model and define the training and testing datasets as well number of trees we want to use as a hyperparameter
+rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=100)
+```
+```{r}
+# get the summary of the random forest model. In the next 2 weeks I will use another model to also predict the number of rings and do a comparison analysis of how each model differs from each other and what works better. 
+summary(rf_model)
+rf_model
+```
+
+
+
