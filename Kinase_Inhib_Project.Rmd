@@ -80,13 +80,30 @@ testing_df_x <- subset(testing_df,select=-rings)
 testing_y <- testing_df$rings
 
 # build the random forest model and define the training and testing datasets as well number of trees we want to use as a hyperparameter
-rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=100)
 ```
 ```{r}
 # get the summary of the random forest model. In the next 2 weeks I will use another model to also predict the number of rings and do a comparison analysis of how each model differs from each other and what works better. 
+
+# first random forest model predictions with trees = 15 and plot MSE for ntreees
+rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=15)
 summary(rf_model)
 rf_model
+plot(rf_model, type = 'l', main = "MSE Plot")
+```
+```{r}
+# second RF model with 40 trees and plot MSE over ntrees
+rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=40)
+summary(rf_model)
+rf_model
+plot(rf_model, type = 'l', main = "MSE Plot")
 ```
 
+```{r}
+#third random forest model w number of trees being 80 and plot MSE over ntrees
+rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=80)
+summary(rf_model)
+rf_model
+plot(rf_model, type = 'l', main = "MSE Plot")
+```
 
 
