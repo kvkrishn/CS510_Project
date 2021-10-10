@@ -8,5 +8,8 @@ analysis of this Random Forest model and another model to see prediction accurac
 
 Data: SRC Kinase inhibitor Dataset(xlsx file)
 
-Details: ~3000 molecules with ~20 aggregate chemical features
+Output: Summary statistics of RF model on training and testing(variance level covered, rmse, etc)
 
+Details: Data contains ~3000 molecules with smile strings and ~20 aggregate chemical features
+
+All code is contained in the R notebook and if run, should contain comments and information on how to load dataset and what each step is doing and functioning. Make sure the dataset is in the same directory as the R notebook for the code to load dataset properly. 
