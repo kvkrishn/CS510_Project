@@ -1,5 +1,5 @@
 ---
-title: "Prediction of Aromatic Rings in SRC Kinase Inhibitors"
+title: "Analysis of Different Predictive Models for Prediction of Aromatic Rings in SRC Kinase Inhibitors"
 output: html_notebook
 ---
 
@@ -34,6 +34,126 @@ src_kin_2 = subset(src_kinase_dataframe, select = -smiles)
 names(src_kin_2)
 summary(src_kin_2)
 ```
+
+
+```{r}
+# analyze variables and the way that they are distributed through histograms. 
+
+# install tidyverse
+install.packages("tidyverse")
+library(tidyverse)
+```
+```{r}
+# create histogram plots for variables to understand distribution
+ggplot(src_kin_2, aes(x=hallkier))+
+  geom_histogram(color="mistyrose4", fill="mistyrose")
+
+ggplot(src_kin_2, aes(x=weight))+
+  geom_histogram(color="darkblue", fill="lightblue")
+
+ggplot(src_kin_2, aes(x=qed))+
+  geom_histogram(color="red1", fill="brown1")
+
+ggplot(src_kin_2, aes(x=SAS))+
+  geom_histogram(color="green4", fill="green2")
+
+ggplot(src_kin_2, aes(x=logP))+
+  geom_histogram(color="orangered1", fill="orange")
+
+ggplot(src_kin_2, aes(x=csp3))+
+  geom_histogram(color="deepskyblue1", fill="turquoise")
+
+ggplot(src_kin_2, aes(x=amidebonds))+
+  geom_histogram(color="tomato4", fill="tomato1")
+
+ggplot(src_kin_2, aes(x=alirings))+
+  geom_histogram(color="paleturquoise4", fill="paleturquoise1")
+
+ggplot(src_kin_2, aes(x=alicarbo))+
+  geom_histogram(color="khaki1", fill="khaki4")
+
+ggplot(src_kin_2, aes(x=alihetero))+
+  geom_histogram(color="darkolivegreen4", fill="darkolivegreen1")
+
+ggplot(src_kin_2, aes(x=arorings))+
+  geom_histogram(color="indianred", fill="hotpink1")
+
+ggplot(src_kin_2, aes(x=bridgehead))+
+  geom_histogram(color="darkseagreen4", fill="darkseagreen1")
+
+ggplot(src_kin_2, aes(x=hba))+
+  geom_histogram(color="firebrick", fill="firebrick1")
+
+ggplot(src_kin_2, aes(x=hbd))+
+  geom_histogram(color="slategray", fill="slategray1")
+
+ggplot(src_kin_2, aes(x=rotatable))+
+  geom_histogram(color="slateblue4", fill="slateblue1")
+
+ggplot(src_kin_2, aes(x=stereocenter))+
+  geom_histogram(color="goldenrod", fill="goldenrod1")
+
+ggplot(src_kin_2, aes(x=laputeASA))+
+  geom_histogram(color="seagreen4", fill="seagreen1")
+
+ggplot(src_kin_2, aes(x=rings))+
+  geom_histogram(color="orchid4", fill="orchid1")
+```
+```{r}
+# understand relationship between covariates and predictor variable which is rings. use ggplot for plots to understand for further analysis
+# when forming models 
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = qed, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = SAS, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = logP, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = weight, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = csp3, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = hallkier, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = amidebonds, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = alihetero, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = alirings, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = arocarbo, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = hba, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = hbd, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = rotatable, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = laputeASA, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = arorings, y = rings))
+
+ggplot(data = src_kin_2) + 
+  geom_point(mapping = aes(x = bridgehead, y = rings))
+
+
+
+```
 ```{r}
 # this block of code divides the dataset into training, validation, and testing. This was coded with help from stack overflow for debugging questions, but the main base of it is that we split up the training as 60% of the data, the validation as 20% of the data and the testing as 20% of the data. Training, validation and testing help in making sure the model can predict accurately for the predictor variable given the dataset features. We first start off by defining variables that contain the percentages of our training, validation and testing data. We then define the indices while also randomizing our sample set for each divide. Lastly using the indices calculated, we create a training dataframe, validation dataframe, and testing dataframe. 
 
@@ -59,12 +179,72 @@ training_df <- df[trainingind, ]
 val_df <- df[validationind, ]
 testing_df <- df[testingind, ]
 ```
+
+
+```{r}
+# Now I will do some model building. Here we will analyze the performance of 4 models: Linear Regression Model, Log-Linear Model, Random Forest Model, and Neural Network. The predictor variable is the number of rings and we have around 20 covariates. 
+
+# Fit a linear regression model with the data. We want to analyze if the linear regression model will fit the data well or if it will give us an overfitted model. 
+
+# fit the linear model to the data. rings=predictor variable
+fit_src2.glm = lm(rings~.,data=src_kin_2)
+# run stepAIC to find the best linear regression model fit
+fit_src2.step = stepAIC(fit_src2.glm, trace = FALSE)
+
+# get summary and plot
+summary(fit_src2.step)
+plot(fit_src2.step)
+```
+
+
+```{r}
+#Backwards elimination of features that do not provide significance to the model and refitting the data. Looking at the linear regression model fit, we can work to eliminate features that are not found as significant and see if those values change the outcome of the model. 
+
+# update the model and get rid of features that are insignificant to the model
+fit_src3.glm <- update(fit_src2.glm, .~.-alirings)
+fit_src3.glm <- update(fit_src3.glm, .~.-arorings)
+fit_src3.glm <- update(fit_src3.glm, .~.-stereocenter)
+fit_src3.glm <- update(fit_src3.glm, .~.-csp3)
+fit_src3.glm <- update(fit_src3.glm, .~.-SAS)
+fit_src3.glm <- update(fit_src3.glm, .~.-hallkier)
+fit_src3.glm <- update(fit_src3.glm, .~.-amidebonds)
+fit_src3.glm <- update(fit_src3.glm, .~.-hba)
+
+# refit model to see if there is any change
+fit_src3.step = stepAIC(fit_src3.glm,trace=FALSE)
+
+# get summary and plot of results
+summary(fit_src3.step)
+plot(fit_src3.step)
+```
+
+
+```{r}
+#use a basic log-linear regression model to model the difference between linear regression versus log-linear model prediction. The reason we chose log-linear is due to the fact the number of rings can also be considered as a count variable. When we try to fit a linear regression onto the model, we end up with a skewed and overfitted representation of the predicted data.
+
+# install MASS package
+install.packages("MASS")
+library(MASS)
+
+# fit a log-linear model to the data, rings=predictor variable
+fit_src.glm = glm(rings~.,data=src_kin_2,family=poisson)
+
+# use stepAIC to find the best log-linear model to fit the data
+step_fit_src.glm = stepAIC(fit_src.glm,trace = FALSE)
+
+# summary of results and plots of results
+summary(step_fit_src.glm)
+plot(step_fit_src.glm)
+
+```
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
 
 The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
 ```{r}
+# Now let us try using Random Forest as a model for the data. This model might give us better results compared to the linear regression and log-linear models.
+
 # we install the random forest package
 install.packages("randomForest")
 ```
@@ -79,19 +259,18 @@ training_y <- training_df$rings
 testing_df_x <- subset(testing_df,select=-rings)
 testing_y <- testing_df$rings
 
-# build the random forest model and define the training and testing datasets as well number of trees we want to use as a hyperparameter
 ```
 ```{r}
-# get the summary of the random forest model. In the next 2 weeks I will use another model to also predict the number of rings and do a comparison analysis of how each model differs from each other and what works better. 
+# get the summary of the random forest model. 
 
-# first random forest model predictions with trees = 15 and plot MSE for ntreees
+# first random forest model predictions with trees = 15 and plot MSE for ntrees
 rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=15)
 summary(rf_model)
 rf_model
 plot(rf_model, type = 'l', main = "MSE Plot")
 ```
 ```{r}
-# second RF model with 40 trees and plot MSE over ntrees
+# second RF model with 40 trees and plot MSE over ntrees, this might improve the models accuracy and help it account for the variance in the model
 rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=40)
 summary(rf_model)
 rf_model
@@ -99,11 +278,45 @@ plot(rf_model, type = 'l', main = "MSE Plot")
 ```
 
 ```{r}
-#third random forest model w number of trees being 80 and plot MSE over ntrees
+#third random forest model w number of trees being 80 and plot MSE over ntrees, this might either improve or overfit the model. 
 rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=80)
 summary(rf_model)
 rf_model
 plot(rf_model, type = 'l', main = "MSE Plot")
+```
+```{r}
+# Now let us try a neural network model to fit the data. The neural network model might or might not be a good fit for this data as the variable we are predicting is continuous and ultimately, it might be better to use one of the models from before.  
+install.packages("neuralnet")
+```
+
+
+```{r}
+#Neural Network Model, with hidden layers 3,3,1
+library(neuralnet)
+
+# setup neural network model with training data and create the hidden layers of the neural network
+nn_src_kin = neuralnet(rings~.,data=training_df,hidden=c(3,3,1),act.fct="logistic", linear.output=TRUE)
+
+# check the matrix of weights for each feature
+nn_src_kin$result.matrix
+
+# plot the neural network 
+plot(nn_src_kin)
+```
+```{r}
+# predict for testing data using the model
+predict_testNN = neuralnet::compute(nn_src_kin, testing_df)
+predict_testNN = (predict_testNN$net.result * (max(src_kin_2$rings) - min(src_kin_2$rings))) + min(src_kin_2$rings)
+
+# plot the tested versus the predicted 
+plot(testing_df$rings, predict_testNN, col='blue', pch=16, ylab = "predicted number of aromatic rings", xlab = "real number of aromatic rings")
+
+abline(0,1)
+
+# Calculate Root Mean Square Error (RMSE)
+RMSE.NN = (sum((testing_df$rings - predict_testNN)^2) / nrow(testing_df)) ^ 0.5
+sprintf("RMSE for Neural Network = %f", RMSE.NN)
+
 ```
 
 
