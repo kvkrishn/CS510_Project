@@ -185,6 +185,8 @@ testing_df <- df[testingind, ]
 # Now I will do some model building. Here we will analyze the performance of 4 models: Linear Regression Model, Log-Linear Model, Random Forest Model, and Neural Network. The predictor variable is the number of rings and we have around 20 covariates. 
 
 # Fit a linear regression model with the data. We want to analyze if the linear regression model will fit the data well or if it will give us an overfitted model. 
+install.packages("MASS")
+library(MASS)
 
 # fit the linear model to the data. rings=predictor variable
 fit_src2.glm = lm(rings~.,data=src_kin_2)
@@ -221,10 +223,6 @@ plot(fit_src3.step)
 
 ```{r}
 #use a basic log-linear regression model to model the difference between linear regression versus log-linear model prediction. The reason we chose log-linear is due to the fact the number of rings can also be considered as a count variable. When we try to fit a linear regression onto the model, we end up with a skewed and overfitted representation of the predicted data.
-
-# install MASS package
-install.packages("MASS")
-library(MASS)
 
 # fit a log-linear model to the data, rings=predictor variable
 fit_src.glm = glm(rings~.,data=src_kin_2,family=poisson)
