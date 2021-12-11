@@ -7,7 +7,12 @@ This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
 
+
 ```{r}
+# Project Description: 
+
+# In this project I attempt to use multiple different models to predict the aromatic ring count of SRC Kinase Inhibitors, a type of inhibitor that is used as potential drug candidates for cancer proteins. Aromatic ring count is one of the main distinguishing characteristics of SRC Kinase Inhibitors and play a huge role in the binding of the inhibitor to the cancer protein. Therefore, I attempted to use predictive modeling techniques to predict aromatic ring count based on 20 various chemical attributes of the molecule. These chemical attributes were calculated using computational techniques. Another objective of using predictive modeling was to see and compare how well certain models do to others in terms of fitting the data. The data file is in the data folder. 
+
 # install package to read excel file data
 install.packages("readxl")
 ```
@@ -16,19 +21,23 @@ install.packages("readxl")
 library("readxl")
 # read in src kinase inhibitor data. The data contains smile strings of the molecules as well as ~20 aggregate chemical features used for prediction. 
 
-src_kinase_dataframe = read_excel("src_kinase_inhibitor_data.xlsx")
+src_kinase_dataframe = read_excel("data/src_kinase_inhibitor_data.xlsx")
 ```
 ```{r}
+# Pre-processing of the data: Removing unneeded columns, checking variables involved, etc. 
+
 # check names of dataset and what columns are within the dataset. 
 names(src_kinase_dataframe)
+
 # delete first column of dataset as the indexing is not needed
 src_kinase_dataframe <- src_kinase_dataframe[-1]
+
 #check to see if column was deleted
 names(src_kinase_dataframe)
 ```
 ```{r}
-# also get rid of smile strings. This is necessary as we cannot represent smile strings as either a categorical or numerical variable and they also do not contribute much to the prediction unless they are encoded in another space. 
-src_kin_2 = subset(src_kinase_dataframe, select = -smiles)
+# get rid of smile strings. This is necessary as we cannot represent smile strings as either a categorical or numerical variable and they also do not contribute much to the prediction unless they are encoded in another space. 
+src_kin_2 <- subset(src_kinase_dataframe, select = -smiles)
 
 # get the names of the columns now present and look at summary statistics of the data to see how data is framed.
 names(src_kin_2)
@@ -37,71 +46,89 @@ summary(src_kin_2)
 
 
 ```{r}
-# analyze variables and the way that they are distributed through histograms. 
+# Analysis of Variables and Distributions
+# analyze variables and the way that they are distributed through histograms and scatterplots. 
 
 # install tidyverse
 install.packages("tidyverse")
 library(tidyverse)
 ```
 ```{r}
-# create histogram plots for variables to understand distribution
+# create histogram plots for feature set and outcome variable to understand distributions
+
+# Hallkier Count Histogram
 ggplot(src_kin_2, aes(x=hallkier))+
   geom_histogram(color="mistyrose4", fill="mistyrose")
 
+# Weight Histogram
 ggplot(src_kin_2, aes(x=weight))+
   geom_histogram(color="darkblue", fill="lightblue")
 
+# QED values Histogram
 ggplot(src_kin_2, aes(x=qed))+
   geom_histogram(color="red1", fill="brown1")
 
+# SAS Values Histogram
 ggplot(src_kin_2, aes(x=SAS))+
   geom_histogram(color="green4", fill="green2")
 
+# logP Values Histogram
 ggplot(src_kin_2, aes(x=logP))+
   geom_histogram(color="orangered1", fill="orange")
 
+# CSP3 Values Histogram
 ggplot(src_kin_2, aes(x=csp3))+
   geom_histogram(color="deepskyblue1", fill="turquoise")
 
+# Amide Bond Values Histogram
 ggplot(src_kin_2, aes(x=amidebonds))+
   geom_histogram(color="tomato4", fill="tomato1")
 
+# Ali Rings Count Histogram
 ggplot(src_kin_2, aes(x=alirings))+
   geom_histogram(color="paleturquoise4", fill="paleturquoise1")
 
+# Ali Carbo Count Histogram
 ggplot(src_kin_2, aes(x=alicarbo))+
   geom_histogram(color="khaki1", fill="khaki4")
 
+# Ali Hetero Count Histogram
 ggplot(src_kin_2, aes(x=alihetero))+
   geom_histogram(color="darkolivegreen4", fill="darkolivegreen1")
 
+# Aro Ring Count Histogram
 ggplot(src_kin_2, aes(x=arorings))+
   geom_histogram(color="indianred", fill="hotpink1")
 
+# Bridgehead Count Histogram 
 ggplot(src_kin_2, aes(x=bridgehead))+
   geom_histogram(color="darkseagreen4", fill="darkseagreen1")
 
+# HBA Count Histogram
 ggplot(src_kin_2, aes(x=hba))+
   geom_histogram(color="firebrick", fill="firebrick1")
 
+# HBD Count Histogram
 ggplot(src_kin_2, aes(x=hbd))+
   geom_histogram(color="slategray", fill="slategray1")
 
 ggplot(src_kin_2, aes(x=rotatable))+
   geom_histogram(color="slateblue4", fill="slateblue1")
 
+# Stereocenter Count Histogram
 ggplot(src_kin_2, aes(x=stereocenter))+
   geom_histogram(color="goldenrod", fill="goldenrod1")
 
+# laputeASA Count Histograms
 ggplot(src_kin_2, aes(x=laputeASA))+
   geom_histogram(color="seagreen4", fill="seagreen1")
 
+# Rings count Histogram -> outcome variable
 ggplot(src_kin_2, aes(x=rings))+
   geom_histogram(color="orchid4", fill="orchid1")
 ```
 ```{r}
-# understand relationship between covariates and predictor variable which is rings. use ggplot for plots to understand for further analysis
-# when forming models 
+# To understand relationship between covariates and predictor variable which is rings, I used ggplot for plots with the covariates and the outcome variable to understand their relationships when forming models 
 
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = qed, y = rings))
@@ -155,28 +182,31 @@ ggplot(data = src_kin_2) +
 
 ```
 ```{r}
+# We also want to analyze the collinearity or correlation between certain variables, so we create a correlation plot to see which are highly correlated and which variables are not
+library(corrplot)
+corMatMy <- cor(src_kin_2[,1:20])
+corrplot(corMatMy, order = "hclust", tl.cex = 0.7)
+```
+```{r}
+# Now that we have completed the pre-processing and initial analysis of the variables, we move into creating training and testing sets of our data for the predictive models. The outcome variable we would like to predict is the "Rings" variable and the feature set is based on the other chemical attributes calculated.
+
 # this block of code divides the dataset into training, validation, and testing. This was coded with help from stack overflow for debugging questions, but the main base of it is that we split up the training as 60% of the data, the validation as 20% of the data and the testing as 20% of the data. Training, validation and testing help in making sure the model can predict accurately for the predictor variable given the dataset features. We first start off by defining variables that contain the percentages of our training, validation and testing data. We then define the indices while also randomizing our sample set for each divide. Lastly using the indices calculated, we create a training dataframe, validation dataframe, and testing dataframe. 
 
 df <- src_kin_2
 trperc=0.6
-valperc=0.2
-testperc=0.2
+testperc=0.4
 
 percTraining <- trperc
-percValidation <- valperc
 percTesting <- testperc
   
 samplesizeTraining <- floor(percTraining * nrow(df))
-samplesizeValidation <- floor(percValidation * nrow(df))
 samplesizeTesting <- floor(percTesting * nrow(df))
   
 trainingind <- sort(sample(seq_len(nrow(df)), size = samplesizeTraining))
 nottrainingind <- setdiff(seq_len(nrow(df)), trainingind)
-validationind <- sort(sample(nottrainingind, size=samplesizeValidation))
-testingind <- setdiff(nottrainingind, validationind)
+testingind <- sort(sample(nottrainingind, size=samplesizeTesting))
   
 training_df <- df[trainingind, ]
-val_df <- df[validationind, ]
 testing_df <- df[testingind, ]
 ```
 
@@ -185,13 +215,15 @@ testing_df <- df[testingind, ]
 # Now I will do some model building. Here we will analyze the performance of 4 models: Linear Regression Model, Log-Linear Model, Random Forest Model, and Neural Network. The predictor variable is the number of rings and we have around 20 covariates. 
 
 # Fit a linear regression model with the data. We want to analyze if the linear regression model will fit the data well or if it will give us an overfitted model. 
+
 install.packages("MASS")
 library(MASS)
 
 # fit the linear model to the data. rings=predictor variable
-fit_src2.glm = lm(rings~.,data=src_kin_2)
+fit_src2.glm <- lm(rings~.,data=src_kin_2)
+
 # run stepAIC to find the best linear regression model fit
-fit_src2.step = stepAIC(fit_src2.glm, trace = FALSE)
+fit_src2.step <- stepAIC(fit_src2.glm, trace = FALSE)
 
 # get summary and plot
 summary(fit_src2.step)
@@ -200,9 +232,9 @@ plot(fit_src2.step)
 
 
 ```{r}
-#Backwards elimination of features that do not provide significance to the model and refitting the data. Looking at the linear regression model fit, we can work to eliminate features that are not found as significant and see if those values change the outcome of the model. 
+#Now we implement Backwards elimination of features that do not provide significance to the model and we refit the data. Looking at the linear regression model fit, we can work to eliminate features that are not found as significant and see if those values change the outcome of the model. 
 
-# update the model and get rid of features that are insignificant to the model
+# Backwards elimination: update the model and get rid of features that are insignificant to the model
 fit_src3.glm <- update(fit_src2.glm, .~.-alirings)
 fit_src3.glm <- update(fit_src3.glm, .~.-arorings)
 fit_src3.glm <- update(fit_src3.glm, .~.-stereocenter)
@@ -213,7 +245,7 @@ fit_src3.glm <- update(fit_src3.glm, .~.-amidebonds)
 fit_src3.glm <- update(fit_src3.glm, .~.-hba)
 
 # refit model to see if there is any change
-fit_src3.step = stepAIC(fit_src3.glm,trace=FALSE)
+fit_src3.step <- stepAIC(fit_src3.glm,trace=FALSE)
 
 # get summary and plot of results
 summary(fit_src3.step)
@@ -222,13 +254,15 @@ plot(fit_src3.step)
 
 
 ```{r}
-#use a basic log-linear regression model to model the difference between linear regression versus log-linear model prediction. The reason we chose log-linear is due to the fact the number of rings can also be considered as a count variable. When we try to fit a linear regression onto the model, we end up with a skewed and overfitted representation of the predicted data.
+# In the linear regression model, we see that the data is still overfitting despite getting rid of insignificant variables and is causing issues in terms of prediction. From the graphical analysis and the output with an R2 of 1, we see that the model is not a good model for the prediction of aromatic rings. 
+
+# So, we attempt to use a basic log-linear regression model to see whether it will fit better compared to a linear regression model. The reason we chose log-linear is due to the fact the number of rings can also be considered as a count variable. When we try to fit a linear regression onto the model, we end up with a skewed and overfitted representation of the predicted data, so we try to interpret the outcome variable as a count variable to see whether it will give us a better predictive model compared to linear regression. 
 
 # fit a log-linear model to the data, rings=predictor variable
-fit_src.glm = glm(rings~.,data=src_kin_2,family=poisson)
+fit_src.glm <- glm(rings~.,data=src_kin_2,family=poisson)
 
 # use stepAIC to find the best log-linear model to fit the data
-step_fit_src.glm = stepAIC(fit_src.glm,trace = FALSE)
+step_fit_src.glm <- stepAIC(fit_src.glm,trace = FALSE)
 
 # summary of results and plots of results
 summary(step_fit_src.glm)
@@ -241,6 +275,8 @@ When you save the notebook, an HTML file containing the code and output will be 
 
 The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
 ```{r}
+# As shown above, the log-linear model does a better job of fitting the data and predicting the outcome variable, however, the model is still performing pretty horrible given the AIC value and the distributions of the residuals through the graphical analysis. Therefore, we move onto using a Random Forest model. 
+
 # Now let us try using Random Forest as a model for the data. This model might give us better results compared to the linear regression and log-linear models.
 
 # we install the random forest package
@@ -249,6 +285,7 @@ install.packages("randomForest")
 ```{r}
 # load the random forest library
 library(randomForest)
+
 # create training df that contains features and a predictor list that contains the prediction variable which in this case is rings
 training_df_x <- subset(training_df,select=-rings)
 training_y <- training_df$rings
@@ -267,6 +304,7 @@ summary(rf_model)
 rf_model
 plot(rf_model, type = 'l', main = "MSE Plot")
 ```
+
 ```{r}
 # second RF model with 40 trees and plot MSE over ntrees, this might improve the models accuracy and help it account for the variance in the model
 rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=40)
@@ -275,13 +313,7 @@ rf_model
 plot(rf_model, type = 'l', main = "MSE Plot")
 ```
 
-```{r}
-#third random forest model w number of trees being 80 and plot MSE over ntrees, this might either improve or overfit the model. 
-rf_model <- randomForest(x=training_df_x, y=training_y, xtest=testing_df_x, ytest=testing_y, ntree=80)
-summary(rf_model)
-rf_model
-plot(rf_model, type = 'l', main = "MSE Plot")
-```
+
 ```{r}
 # Now let us try a neural network model to fit the data. The neural network model might or might not be a good fit for this data as the variable we are predicting is continuous and ultimately, it might be better to use one of the models from before.  
 install.packages("neuralnet")
@@ -293,7 +325,7 @@ install.packages("neuralnet")
 library(neuralnet)
 
 # setup neural network model with training data and create the hidden layers of the neural network
-nn_src_kin = neuralnet(rings~.,data=training_df,hidden=c(3,3,1),act.fct="logistic", linear.output=TRUE)
+nn_src_kin <- neuralnet(rings~.,data=training_df,hidden=c(3,3,1),act.fct="logistic", linear.output=TRUE)
 
 # check the matrix of weights for each feature
 nn_src_kin$result.matrix
@@ -303,8 +335,8 @@ plot(nn_src_kin)
 ```
 ```{r}
 # predict for testing data using the model
-predict_testNN = neuralnet::compute(nn_src_kin, testing_df)
-predict_testNN = (predict_testNN$net.result * (max(src_kin_2$rings) - min(src_kin_2$rings))) + min(src_kin_2$rings)
+predict_testNN <- neuralnet::compute(nn_src_kin, testing_df)
+predict_testNN <- (predict_testNN$net.result * (max(src_kin_2$rings) - min(src_kin_2$rings))) + min(src_kin_2$rings)
 
 # plot the tested versus the predicted 
 plot(testing_df$rings, predict_testNN, col='blue', pch=16, ylab = "predicted number of aromatic rings", xlab = "real number of aromatic rings")
@@ -312,9 +344,10 @@ plot(testing_df$rings, predict_testNN, col='blue', pch=16, ylab = "predicted num
 abline(0,1)
 
 # Calculate Root Mean Square Error (RMSE)
-RMSE.NN = (sum((testing_df$rings - predict_testNN)^2) / nrow(testing_df)) ^ 0.5
+RMSE.NN <- (sum((testing_df$rings - predict_testNN)^2) / nrow(testing_df)) ^ 0.5
 sprintf("RMSE for Neural Network = %f", RMSE.NN)
 
+# As you can see, the neural network model is not an ideal model to use for this dataset. Out of all of the models that have been implemented, the Random Forest model performs the best and accounts for around 98% of the data. Therefore, the RF model is the ideal model to use for predictive modeling ring count for SRC Kinase Inhibitors. 
 ```
 
 
