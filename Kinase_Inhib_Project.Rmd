@@ -1,22 +1,41 @@
 ---
 title: "Analysis of Different Predictive Models for Prediction of Aromatic Rings in SRC Kinase Inhibitors"
+author: Keerthi Krishnan
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+## Project Description 
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+SRC Kinase Inhibitors are important protein inhibitors and potential drug candidates for cancer proteins. They play an vital role in suppressing tumor growth and oncogenesis in tumor proteins. A distinction factor of SRC Kinase Inhibitors and their existence is their ring count, acting as a key feature or characteristic for these molecules. Potentially, the ring count can affect binding modes of these inhibitors to different cancer proteins and in turn, affect the potential inhibition of cancer proteins. In my research lab, we work in generative modeling and design of SRC Kinase Inhibitors where one of the key evaluating measures of generated molecules is the ring count. Therefore, I plan on predicting aromatic ring count using purely chemical feature based Machine Learning models. There were 2 objectives I wanted to achieve in this project: 
 
+1. Utilizing Machine Learning to build a model that can predict the number of rings of potential SRC Kinase Inhibitor molecules based on chemical properties and salient features. 
+
+2. Comparative Analysis of Different Machine Learning Models to see which model predicts accurately and provides the best fit for the data. 
+
+For this project I implemented 4 different predictive models: 
+
+* Linear Regression Model
+* Log-Linear Regression Model
+* Random Forest Model
+* Neural Network Model
+
+The 3 phases of this project will include pre-processing, model building, and model performance analysis. 
 
 ```{r}
-# Project Description: 
-
-# In this project I attempt to use multiple different models to predict the aromatic ring count of SRC Kinase Inhibitors, a type of inhibitor that is used as potential drug candidates for cancer proteins. Aromatic ring count is one of the main distinguishing characteristics of SRC Kinase Inhibitors and play a huge role in the binding of the inhibitor to the cancer protein. Therefore, I attempted to use predictive modeling techniques to predict aromatic ring count based on 20 various chemical attributes of the molecule. These chemical attributes were calculated using computational techniques. Another objective of using predictive modeling was to see and compare how well certain models do to others in terms of fitting the data. The data file is in the data folder. 
-
 # install package to read excel file data
 install.packages("readxl")
 ```
+## Data Description and Pre-Processing Mechanism
 
+The data that I used consists of the smile strings of the molecules and ~20 chemical attributes for each molecule, which also include drug-likeliness properties. In total, there are ~3000 instances. 
+
+Smile strings act as a form to describe the molecular formula of your molecule. You can think of them as the makeup of your molecule and can give clues on how the molecule will be structurally and property-wise.
+
+There are 20 aggregate chemical features, in which some features describe the basic characteristics such as weight, number of rotatable bonds, hba values, hbd values, etc. However, there are also features that describe drug-likeliness characteristics of the molecule such as logP, SAS, and QED values. Having a mix of different chemical characteristics and features is always good for a model as it creates more variance in the dataset and can give different perspectives in understanding model fitting. 
+
+Our outcome or predictor variable will be rings. This variable represents the number of aromatic rings in a molecule. 
+
+Some of the pre-processing will include getting rid of unnecessary co-variates, getting rid of any missing values, and performing some initial visualization of the data to understand how each feature looks and its correlation to other features involved. 
 ```{r}
 library("readxl")
 # read in src kinase inhibitor data. The data contains smile strings of the molecules as well as ~20 aggregate chemical features used for prediction. 
@@ -41,9 +60,11 @@ src_kin_2 <- subset(src_kinase_dataframe, select = -smiles)
 
 # get the names of the columns now present and look at summary statistics of the data to see how data is framed.
 names(src_kin_2)
+
+# summary statistics of the data
 summary(src_kin_2)
 ```
-
+### Analysis of Variables, Distributions, and Correlations- Visualization
 
 ```{r}
 # Analysis of Variables and Distributions
@@ -53,6 +74,10 @@ summary(src_kin_2)
 install.packages("tidyverse")
 library(tidyverse)
 ```
+
+#### Histogram Visualization of Variables
+
+We use the histograms to understand how the data is distributed for each feature. This can potentially provide insight into the way we want to build the model and the importance of each feature. 
 ```{r}
 # create histogram plots for feature set and outcome variable to understand distributions
 
@@ -127,66 +152,97 @@ ggplot(src_kin_2, aes(x=laputeASA))+
 ggplot(src_kin_2, aes(x=rings))+
   geom_histogram(color="orchid4", fill="orchid1")
 ```
-```{r}
-# To understand relationship between covariates and predictor variable which is rings, I used ggplot for plots with the covariates and the outcome variable to understand their relationships when forming models 
 
+#### Scatterplot Visualization of Covariates to Predictor Variable
+
+The scatter plot visualization helps in understanding how each variable is correlated to the predictor variable. In some ways we can understand what type and how big of a role each variable plays in the prediction and potentially define the correlation. 
+
+```{r}
+# I used ggplot for plots with the covariates and the outcome variable to understand their relationships when forming models 
+
+# rel between qed and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = qed, y = rings))
 
+# rel between SAS and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = SAS, y = rings))
 
+# rel between logP and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = logP, y = rings))
 
+# rel between weight and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = weight, y = rings))
 
+# rel between csp3 and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = csp3, y = rings))
 
+# rel between hallkier and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = hallkier, y = rings))
 
+# rel between amidebonds and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = amidebonds, y = rings))
 
+# rel between alihetero and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = alihetero, y = rings))
 
+# rel between alirings and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = alirings, y = rings))
 
+# rel between arocarbo and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = arocarbo, y = rings))
 
+# rel between hba and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = hba, y = rings))
 
+# rel between hbd and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = hbd, y = rings))
 
+# rel between rotatable bonds and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = rotatable, y = rings))
 
+# rel between laputeASA and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = laputeASA, y = rings))
 
+# rel between arorings and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = arorings, y = rings))
 
+# rel between bridgehead and rings
 ggplot(data = src_kin_2) + 
   geom_point(mapping = aes(x = bridgehead, y = rings))
 
 
 
 ```
+
+#### Correlation Plot of Covariates
+
+The correlation plot gives us insight into how well the variables interact with each other and how co-linear or correlated each variable is to one another. This correlation plot is a visual representation of a correlation matrix for the feature set. The circles closer to dark blue indicate higher correlation and the circles closer to red indicate less correlation. This also aids us in understanding the data better, especially in which variables will have huge effect on the predictor variables.
+
 ```{r}
-# We also want to analyze the collinearity or correlation between certain variables, so we create a correlation plot to see which are highly correlated and which variables are not
+# We also want to analyze the colinearity or correlation between certain variables, so we create a correlation plot to see which are highly correlated and which variables are not
 library(corrplot)
 corMatMy <- cor(src_kin_2[,1:20])
 corrplot(corMatMy, order = "hclust", tl.cex = 0.7)
 ```
+#### Data Training and Testing Split
+
+Now that we have completed the pre-processing and initial analysis of the variables, we move into creating training and testing sets of our data for the predictive models. The outcome variable we would like to predict is the "Rings" variable and the feature set is based on the other chemical attributes calculated.
+
+This block of code divides the data set into training, validation, and testing. This was coded with help from stack overflow for debugging questions, but the main base of it is that we split up the training as 60% of the data, and the testing as 40% of the data. Training and testing help in making sure the model can predict accurately for the predictor variable given the data set features. We first start off by defining variables that contain the percentages of our training and testing data. We then define the indices while also randomizing our sample set for each divide. Lastly using the indices calculated, we create a training data frame and testing data frame. 
 ```{r}
 # Now that we have completed the pre-processing and initial analysis of the variables, we move into creating training and testing sets of our data for the predictive models. The outcome variable we would like to predict is the "Rings" variable and the feature set is based on the other chemical attributes calculated.
 
@@ -210,11 +266,20 @@ training_df <- df[trainingind, ]
 testing_df <- df[testingind, ]
 ```
 
+### Model Building and Analysis
 
+Now I will do some model building. Here we will analyze the performance of 4 models and determine the best fit model for the data: 
+
+* Linear Regression Model
+* Log-Linear Model
+* Random Forest Model
+* Neural Network
+
+The predictor variable is the number of rings and we have around 20 covariates that will be in the model. 
+
+#### Linear Regression Model
 ```{r}
-# Now I will do some model building. Here we will analyze the performance of 4 models: Linear Regression Model, Log-Linear Model, Random Forest Model, and Neural Network. The predictor variable is the number of rings and we have around 20 covariates. 
-
-# Fit a linear regression model with the data. We want to analyze if the linear regression model will fit the data well or if it will give us an overfitted model. 
+# Fit a linear regression model with the data. We want to analyze if the linear regression model will fit the data well or if it will give us an over-fitted model. 
 
 install.packages("MASS")
 library(MASS)
@@ -229,7 +294,17 @@ fit_src2.step <- stepAIC(fit_src2.glm, trace = FALSE)
 summary(fit_src2.step)
 plot(fit_src2.step)
 ```
+##### Analysis of Linear Regression Model- Part 1
 
+What we just achieved was building a basic linear regression model where we predicted the number of rings based on all of the co-variates we have in our data. By building the initial model, we see that we get an R2 of 1, which plays cause for concern. The fact that the R2 is 1 tells us immediately that the model is over-fitting the data. If we also take a look at the graphs: 
+
+1. The residual versus fitted graph has no even distribution of points across the red line which tells us that the model is not really accounting for the variance even though it is saying it is. You can also see that the points are clustered together in locations, which further advocates for the stated. 
+
+2. In the QQ plot, there is really no curve of the plotted line which shows indication of overfitting. 
+
+3. We see both clusters of residual points in the 3rd graph as well as clustering in the Cook's Leverage graph. This can also be understood that, although our model tells us that it is accounting for 100% of the variance through our R2, we don't see any graphical indication of a good model.
+
+A key cause of this could be due to the amount of features in the model. There are significant features in the model such as alicarbo and alihetero, acting as main effects for the prediction, however, we see a good amount of features that are not playing a significant role. Therefore, we start off by implementing Backwards Elimination of variables to rid the model of insignificant variables and re-fit our linear model based on the values that are significant. 
 
 ```{r}
 #Now we implement Backwards elimination of features that do not provide significance to the model and we refit the data. Looking at the linear regression model fit, we can work to eliminate features that are not found as significant and see if those values change the outcome of the model. 
@@ -251,13 +326,19 @@ fit_src3.step <- stepAIC(fit_src3.glm,trace=FALSE)
 summary(fit_src3.step)
 plot(fit_src3.step)
 ```
+##### Analysis of Linear Regression Model- Part 2
 
+As you can see, even after eliminating unnecessary features and fitting with the features we found somewhat or highly significant, we still end up with a skewed model where there is still clustering of residual points, over-fitting shown by the R2 value and more. Therefore, we see that the Linear Regression Model is not the best fit model for the data and predictor variable, and we move on to the next model. 
+
+#### Log-Linear Model
+
+Next, we will attempt to use a basic log-linear regression model to see whether it will fit better compared to a linear regression model. 
+
+Log-Linear models are used to model predictor variables that act as count variables, such as number of hospital beds over a certain month, etc.
+
+The reason we choose a log-linear model is due to the fact the number of aromatic rings(our predictor variable) can technically also be considered as a count variable. When we attempted to fit a linear regression onto the model, we ended up with a skewed and over-fitted representation of the predicted data, so let us try to interpret the outcome variable as a count variable to see whether the log-linear regression model will give us a better predictive model compared to linear regression. 
 
 ```{r}
-# In the linear regression model, we see that the data is still overfitting despite getting rid of insignificant variables and is causing issues in terms of prediction. From the graphical analysis and the output with an R2 of 1, we see that the model is not a good model for the prediction of aromatic rings. 
-
-# So, we attempt to use a basic log-linear regression model to see whether it will fit better compared to a linear regression model. The reason we chose log-linear is due to the fact the number of rings can also be considered as a count variable. When we try to fit a linear regression onto the model, we end up with a skewed and overfitted representation of the predicted data, so we try to interpret the outcome variable as a count variable to see whether it will give us a better predictive model compared to linear regression. 
-
 # fit a log-linear model to the data, rings=predictor variable
 fit_src.glm <- glm(rings~.,data=src_kin_2,family=poisson)
 
@@ -269,14 +350,21 @@ summary(step_fit_src.glm)
 plot(step_fit_src.glm)
 
 ```
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+##### Analysis of Log-Linear Regression Model
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+As we can see by the results of the log-linear regression model, we ultimately get a reasonable fit of the model to the data. 
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+In this model too, we see that alicarbo, alihetero and some other co-variates that we saw in the last model prove to be very significant predictors and have important effects on the outcome variable. 
+
+The graphs show us that there is reasonable distribution of the residual points on the residuals versus fitted graph. We still see clustering of residual points however, which still indicates skewed model performance. We also see that there is even splittage of points below and above the red line of the residuals plot which portrays that this model is fitting somewhat reasonably. The QQ plot shows some skewage and deviation due to certain outliers of the data. The Cook's Leverage plot also shows us some outliers which could be skewing the data and the model fit. When we look at the AIC however, it is very high, indicating poor performance of the model. Although interpreting the predictor variable as a count variable was helpful, it still did not lead us into finding a good enough model that fits the data well. 
+
+As shown above, the log-linear model does a better job of fitting the data and predicting the outcome variable, however, the model is still performing pretty horrible given the AIC value and the distributions of the residuals through the graphical analysis. Therefore, we move onto using a Random Forest model. 
+
+#### Random Forest Model
+
+Now we move into higher techniques as we have determined that our predictor variable is more complex than we thought and we might need more complex models to account for the variance in the data. We attempt to fit a Random Forest model with certain parameters and see how well it is able to predict the ring count. 
+
 ```{r}
-# As shown above, the log-linear model does a better job of fitting the data and predicting the outcome variable, however, the model is still performing pretty horrible given the AIC value and the distributions of the residuals through the graphical analysis. Therefore, we move onto using a Random Forest model. 
-
 # Now let us try using Random Forest as a model for the data. This model might give us better results compared to the linear regression and log-linear models.
 
 # we install the random forest package
@@ -304,6 +392,11 @@ summary(rf_model)
 rf_model
 plot(rf_model, type = 'l', main = "MSE Plot")
 ```
+##### Random Forest Model 1 Analysis
+
+We fit a Random Forest model to the data with an initial parameter value of 15 trees. As we can see through the output of our results, the Random Forest predicts very well with the mean of squared residuals being around 0.015 and the percentage of variance accounted for being around 98%. Also looking at the MSE graph, we see that the error significantly decreases as the number of trees increase. This gives us insight into how well the model predicts given the data and ultimately tells us that this model is ideal to predict the number of aromatic rings. 
+
+To see if we can improve the model a little more, we increase our tree count to 40 trees and see whether we can reduce the mean of squared residuals value. 
 
 ```{r}
 # second RF model with 40 trees and plot MSE over ntrees, this might improve the models accuracy and help it account for the variance in the model
@@ -312,10 +405,17 @@ summary(rf_model)
 rf_model
 plot(rf_model, type = 'l', main = "MSE Plot")
 ```
+##### Random Forest Model 2 Analysis
 
+As said before, the increase of the number of trees does improve the model slightly as it brings the mean of squared residuals value down to 0.011 and the test set MSE is 0.02. The % of Variance explained in training is 98.89% and the variance explained for testing is 98.44% indicating good performance. The MSE graph also shows that the error decreases as the number of trees increase, so it is able to account for the variance in the data. All in all, the Random Forest model seems to be the best predictive model for the number of rings. 
 
+Now we try to implement a Neural Network model, just to see whether adding more complexity will cause the data to be misrepresented.  
+
+#### Neural Network Model
+
+We attempt to fit a Neural Network model to the data, where it is a dense 3 layer network.  The neural network model might or might not be a good fit for this data as the variable we are predicting is continuous and ultimately, it might be better to use one of the models from before.
 ```{r}
-# Now let us try a neural network model to fit the data. The neural network model might or might not be a good fit for this data as the variable we are predicting is continuous and ultimately, it might be better to use one of the models from before.  
+# Now let us try a neural network model to fit the data. 
 install.packages("neuralnet")
 ```
 
@@ -349,5 +449,13 @@ sprintf("RMSE for Neural Network = %f", RMSE.NN)
 
 # As you can see, the neural network model is not an ideal model to use for this dataset. Out of all of the models that have been implemented, the Random Forest model performs the best and accounts for around 98% of the data. Therefore, the RF model is the ideal model to use for predictive modeling ring count for SRC Kinase Inhibitors. 
 ```
+#### Analysis of Neural Network Model
 
+As you can see, the neural network model is not good for the prediction of rings based on the data. The error is very high and the RMSE is higher than in the Random Forest, showing us that over-complication of model fitting can lead to misrepresenting the data.
 
+### Conclusions and Further Remarks
+SRC Kinase Inhibitors are critical molecules in the space of cancer and act as potential drug inhibitors that can be used for treatment today. Although there are other characteristics that play a huge role in determining the efficacy of these molecules, there are other variables that also play huge roles that are often overlooked sometimes. As this field is so vast, even the smallest contribution can add another piece to the puzzle, continuously improving our research in this field. 
+
+In terms of the project, we achieved both of the objectives: the first one being to create a good model that will be an accurate model to predict the number of rings in an SRC Kinase Inhibitor and the second one being to do a comparative analysis of the different models we created and see which performs the best. Out of all the models built, I come to the conclusion that the Random Forest model with 40 trees performs the best on the data compared to all other models built. It accounts for the complexity of the data as well as the variance, causing it to perform well in both training and testing. The MSE plots also give us insight into how well the error decreases as the number of trees increase, showing us that the model performs very well on this dataset. I think the main takeaway from this project would be to really understand how your data is distributed and the variance it contains, utimately using that information to formulate a good predictive model. With the confluence of all the work put in, from initial pre-processing and visual analysis, to model building with numerical and graphical analysis, we ultimately achieved both our goals, leaving us satisfied. 
+
+Further steps I would take in this project would be to include a detailed PCA analysis for feature importance as well as being able to figure out a way to include features such as molecular formula or structural characteristics into this dataset. By implementing thes techniques, I think there might be a change in how the data represents the predicted variable and can lead to some new discovery.
